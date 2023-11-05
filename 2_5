@@ -1,0 +1,27 @@
+fun main(args: Array<String>) {
+    print("Enter a number and a measure: ")
+    val (inputCount, inputUnit) = readln().split(" ")
+    val outputStr = checkInput(inputCount.toInt(), inputUnit.lowercase())
+    println(outputStr)
+}
+
+fun checkInput(count: Int, unit: String): String {
+    val s = if (unit.last() == 's') "s" else ""
+    val convertion = convertUnit(count)
+    var outputUnit = if (count > 1) unit + "s" else unit
+    val rightOutput = "$count kilometer$s is $convertion meters"
+    val wrongInput = "Wrong input"
+    return when {
+        count == 1 -> if (UnitBase().kilometer.contains(unit)) rightOutput else wrongInput
+        count > 1 -> if (UnitBase().kilometer.contains(unit.substring(0, unit.length - 1))) rightOutput else wrongInput
+        else -> wrongInput
+    }
+}
+
+fun convertUnit(count: Int): Int {
+    return count * 1000
+}
+
+data class UnitBase(
+    val kilometer: List<String> = listOf("km", "kilometer")
+)
