@@ -13,7 +13,7 @@ fun checkInput(count: Int, unit: String): String {
     val wrongInput = "Wrong input"
     return when {
         count == 1 -> if (UnitBase().kilometer.contains(unit)) rightOutput else wrongInput
-        count > 1 -> if (UnitBase().kilometer.contains(unit.substring(0, unit.length - 1))) rightOutput else wrongInput
+        count > 1 -> if (UnitBase().kilometer.contains(unit.substring(0, unit.length - 1)) || unit == "km") rightOutput else wrongInput
         else -> wrongInput
     }
 }
