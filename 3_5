@@ -1,0 +1,74 @@
+fun main() {
+    print("Enter a number and a measure of length: ")
+    val (inputCount, inputUnit) = readln().split(" ")
+    val outputStr = checkInput(inputCount.toDouble(), inputUnit.lowercase())
+    println(outputStr)
+}
+
+fun checkInput(count: Double, unit: String): String {
+    var inputUnit = ""
+    var isRightStr = false
+    var unitForConverting = ""
+
+    outerLoop@ for (i in UnitBase().unitBase.indices) {
+        for ((k, u) in UnitBase().unitBase[i]) {
+            if (u.contains(unit)) {
+                when {
+                    count == 1.0 -> {
+                        inputUnit = u[1]
+                        isRightStr = true
+                        unitForConverting = k
+                        break@outerLoop
+                    }
+
+                    count > 1.0 -> {
+                        inputUnit = u[2]
+                        isRightStr = true
+                        unitForConverting = k
+                        break@outerLoop
+                    }
+
+                    else -> {
+                        isRightStr = false
+                        break@outerLoop
+                    }
+                }
+            }
+        }
+    }
+    return if (!isRightStr) {
+        "Wrong input. Unknown unit $unit"
+    } else {
+        val outputCount = convertUnit(count, unitForConverting)
+        val outputUnit = if (outputCount > 1.0) UnitBase().unitBase[3]["meter"]?.get(2) else
+            UnitBase().unitBase[3]["meter"]?.get(1)
+        "$count $inputUnit is $outputCount $outputUnit"
+    }
+}
+
+fun convertUnit(count: Double, unit: String): Double {
+    return when (unit) {
+        "kilometer" -> count * 1000.0
+        "millimeter" -> count * 0.001
+        "centimeter" -> count * 0.01
+        "meter" -> count
+        "mile" -> count * 1609.35
+        "yard" -> count * 0.9144
+        "foot" -> count * 0.3048
+        "inch" -> count * 0.0254
+        else -> 0.0
+    }
+}
+
+class UnitBase() {
+    val unitBase = arrayOf(
+        mapOf("kilometer" to listOf("km", "kilometer", "kilometers")),
+        mapOf("millimeter" to listOf("mm", "millimeter", "millimeters")),
+        mapOf("centimeter" to listOf("cm", "centimeter", "centimeters")),
+        mapOf("meter" to listOf("m", "meter", "meters")),
+        mapOf("mile" to listOf("mi", "mile", "miles")),
+        mapOf("yard" to listOf("yd", "yard", "yards")),
+        mapOf("foot" to listOf("ft", "foot", "feet")),
+        mapOf("inch" to listOf("in", "inch", "inches"))
+    )
+}
