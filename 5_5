@@ -1,0 +1,220 @@
+fun main() {
+    while (true) {
+        print("Enter what you want to convert (or exit): ")
+        val inputStr = readln()
+        if (inputStr == "exit") {
+            break
+        } else {
+            val inputArray = formatInputString(inputStr)
+            if (inputArray.isEmpty()) {
+                println("Parse error")
+                continue
+            } else {
+                val outputStr = checkInput(inputArray[0].toDouble(), inputArray[1], inputArray[3])
+                println(outputStr)
+            }
+        }
+    }
+}
+
+//обработка входной строки на неправильный ввод и в случае градусов склеивание 2 слов в одну строку
+fun formatInputString(str: String): Array<String> {
+    val inputList = str.split(" ")
+    if (inputList.size < 4) return emptyArray()
+    val outputArray = Array(4) { "" }
+    val countOfDegrees = inputList.count { it == "degree" || it == "degrees" }
+    if (inputList[0].matches("-?\\d+.?\\d*".toRegex())) outputArray[0] = inputList[0] else return emptyArray()
+    var a = Pair("", "")
+    when (countOfDegrees) {
+        0 -> if (inputList.size == 4) {
+            a = convertString(inputList[1].lowercase(), inputList[3].lowercase())
+            outputArray[2] = inputList[2].lowercase()
+        } else {
+            return emptyArray()
+        }
+
+        1 -> if (inputList.size == 5) {
+            when {
+                inputList[1] == "degree" || inputList[1] == "degrees" -> {
+                    a = convertString("${inputList[1].lowercase()} ${inputList[2].toCapitalize()}", inputList[4].lowercase())
+                    outputArray[2] = inputList[3].lowercase()
+                }
+
+                inputList[3] == "degree" || inputList[1] == "degrees" -> {
+                    a = convertString(inputList[1].lowercase(), "${inputList[3].lowercase()} ${inputList[4].toCapitalize()}")
+                    outputArray[2] = inputList[2].lowercase()
+                }
+
+                else -> return emptyArray()
+            }
+        } else {
+            return emptyArray()
+        }
+
+        2 -> if (inputList.size == 6) {
+            if ((inputList[1] == "degree" || inputList[1] == "degrees") &&
+                (inputList[4] == "degree" || inputList[4] == "degrees")
+            ) {
+                a = convertString(
+                    "${inputList[1].lowercase()} ${inputList[2].toCapitalize()}",
+                    "${inputList[4].lowercase()} ${inputList[5].toCapitalize()}"
+                )
+                outputArray[2] = inputList[3].lowercase()
+            } else {
+                return emptyArray()
+            }
+        } else {
+            return emptyArray()
+        }
+    }
+    outputArray[1] = a.first
+    outputArray[3] = a.second
+    return if (outputArray[2] == "to" || outputArray[2] == "in") outputArray else emptyArray()
+}
+
+fun convertString(one: String, three: String): Pair<String, String> = Pair(one, three)
+
+//extention функция для преобразования слова в нижний регистр с заглавной буквой
+fun String.toCapitalize(): String {
+    val a = this.lowercase()
+    return a[0].uppercase() + a.substring(1)
+}
+
+
+//содержится ли входящая единица измерения в классе единиц измерения
+//аргументы: массив единиц измерений, название единицы измерения для конвертации.
+//выход: содержится ли входящая единица измерения в этом массиве,
+// ключ и первое значение в массиве единиц измерения (ключ ед. число, первое значение - множ. число)
+fun foundInBase(base: Array<Map<String, List<String>>>, unit: String): Pair<Boolean, Array<String>> {
+    var isContain = false
+    var mapData = emptyArray<String>()
+    outerLoop@ for (i in base.indices) {
+        for ((k, u) in base[i]) {
+            if (u.contains(unit)) {
+                mapData += k
+                mapData += u[0]
+                isContain = true
+                break@outerLoop
+            }
+        }
+    }
+    return Pair(isContain, mapData)
+}
+
+//формирует выходную строку в зависимости от входных единиц.
+fun checkInput(count: Double, inputUnit: String, outputUnit: String): String {
+    val key = listOf("Length", "Weight", "Temperature")                            //категории
+    val arrayOfUnit = arrayOf(UnitBase().length, UnitBase().weight, UnitBase().temperature) //массив из величин
+
+    var inputUnitToString = "???"
+    val number: Double
+    var outputUnitToString = outputUnit
+    for (i in arrayOfUnit.indices) {  //от i будет зависеть текущая категория, в которой идет поиск
+        val inputCheckUnit = foundInBase(arrayOfUnit[i], inputUnit)
+        if (inputCheckUnit.first) {          //true - если входная единица совпала с какой-то в категории.
+            if ((i == 0 || i == 1) && count < 0.0) return "${key[i]} shouldn't be negative" //если отрицательная длина или вес
+            inputUnitToString =
+                if (count == 1.0) inputCheckUnit.second[0] else inputCheckUnit.second[1] //в ед. или мн. число ставить
+            val outputCheckUnit = foundInBase(arrayOfUnit[i], outputUnit)
+            if (outputCheckUnit.first) {   //категория выходной единицы должна совпадать с категорией входной
+                number =
+                    when (i) { //в зависимости от i (№ категории, в которой сейчас находимся) происходит конвертация
+                        0 -> convertLength(count, inputCheckUnit.second[0], outputCheckUnit.second[0])
+                        1 -> convertWeight(count, inputCheckUnit.second[0], outputCheckUnit.second[0])
+                        2 -> convertTemperature(count, inputCheckUnit.second[0], outputCheckUnit.second[0])
+                        else -> break
+                    }
+                outputUnitToString =
+                    if (number == 1.0) outputCheckUnit.second[0] else outputCheckUnit.second[1] //в ед. или мн. число ставить
+                return "$count $inputUnitToString is $number $outputUnitToString" //выходная строка при правильной конвертации
+            }
+            inputUnitToString =
+                inputCheckUnit.second[1] //при неправильной конвертации входной unit ставится во мн. число
+            break
+        }
+    }
+    return "Conversion from $inputUnitToString to $outputUnitToString is impossible"  ////выходная строка при неправильной конвертации
+}
+
+//конвертация единиц длины (сначало в метры, из метров в нужные единицы)
+fun convertLength(count: Double, inputUnit: String, outputUnit: String): Double {
+    val meters = when (inputUnit) {
+        "kilometer" -> count * 1000.0
+        "millimeter" -> count * 0.001
+        "centimeter" -> count * 0.01
+        "meter" -> count
+        "mile" -> count * 1609.35
+        "yard" -> count * 0.9144
+        "foot" -> count * 0.3048
+        "inch" -> count * 0.0254
+        else -> -1.0
+    }
+    return when (outputUnit) {
+        "kilometer" -> meters / 1000.0
+        "millimeter" -> meters / 0.001
+        "centimeter" -> meters / 0.01
+        "meter" -> meters / 1
+        "mile" -> meters / 1609.35
+        "yard" -> meters / 0.9144
+        "foot" -> meters / 0.3048
+        "inch" -> meters / 0.0254
+        else -> -1.0
+    }
+}
+
+//конвертация единиц веса (сначало в граммы, из них в нужные единицы)
+fun convertWeight(count: Double, inputUnit: String, outputUnit: String): Double {
+    val grams = when (inputUnit) {
+        "kilogram" -> count * 1000.0
+        "milligram" -> count * 0.001
+        "gram" -> count
+        "pound" -> count * 453.592
+        "ounce" -> count * 28.3495
+        else -> -1.0
+    }
+    return when (outputUnit) {
+        "kilogram" -> grams / 1000.0
+        "milligram" -> grams / 0.001
+        "gram" -> grams / 1
+        "pound" -> grams / 453.592
+        "ounce" -> grams / 28.3495
+        else -> -1.0
+    }
+}
+
+//конвертация температуры
+fun convertTemperature(count: Double, inputUnit: String, outputUnit: String): Double {
+    return when (inputUnit) {
+        "degree Celsius" -> if (outputUnit == "degree Fahrenheit") (count * 9.0 / 5.0) + 32.0 else count + 273.15
+        "degree Fahrenheit" -> if (outputUnit == "degree Celsius") (count - 32) * 5.0 / 9.0 else (count + 459.67) * 5.0 / 9.0
+        "kelvin" -> if (outputUnit == "degree Celsius") count - 273.15 else (count * 9.0 / 5.0) - 459.67
+        else -> -1.0
+    }
+}
+
+//массив единиц
+class UnitBase {
+    val length: Array<Map<String, List<String>>> = arrayOf(
+        mapOf("kilometer" to listOf("kilometers", "km", "kilometer")),
+        mapOf("millimeter" to listOf("millimeters", "mm", "millimeter")),
+        mapOf("centimeter" to listOf("centimeters", "cm", "centimeter")),
+        mapOf("meter" to listOf("meters", "m", "meter")),
+        mapOf("mile" to listOf("miles", "mi", "mile")),
+        mapOf("yard" to listOf("yards", "yd", "yard")),
+        mapOf("foot" to listOf("feet", "ft", "foot")),
+        mapOf("inch" to listOf("inches", "in", "inch"))
+    )
+    val weight: Array<Map<String, List<String>>> = arrayOf(
+        mapOf("gram" to listOf("grams", "g", "gram")),
+        mapOf("kilogram" to listOf("kilograms", "kg", "kilogram")),
+        mapOf("milligram" to listOf("milligrams", "mg", "milligram")),
+        mapOf("pound" to listOf("pounds", "lb", "pound")),
+        mapOf("ounce" to listOf("ounces", "oz", "ounce"))
+    )
+    val temperature: Array<Map<String, List<String>>> = arrayOf(
+        mapOf("degree Celsius" to listOf("degrees Celsius", "celsius", "dc", "c", "degree Celsius")),
+        mapOf("degree Fahrenheit" to listOf("degrees Fahrenheit", "fahrenheit", "df", "f", "degree Fahrenheit")),
+        mapOf("kelvin" to listOf("kelvins", "k", "kelvin"))
+    )
+}
+
