@@ -149,3 +149,186 @@ Enter what you want to convert (or exit): 100 CM in KM
 100 centimeters is 0,001 kilometers
 
 Enter what you want to convert (or exit): exit
+
+
+5_5
+
+Описание
+Наш конвертер теперь действительно работоспособен, но одного не хватает: он не умеет работать с единицами измерения температуры. Расширим программу, добавив три единицы температуры.
+
+Основными единицами измерения температуры, используемыми сегодня, являются градусы Цельсия (C), градусы Фаренгейта (F) и кельвины (К). Программа должна позволять следующие обозначения:
+
+Для градусов Цельсия пользователь может ввести «градусы Цельсия», «градусы Цельсия», «Цельсия», «постоянный ток» или «с».
+Для градусов по Фаренгейту пользователь может ввести «градусы по Фаренгейту», «градусы по Фаренгейту», «по Фаренгейту», «df» или «f».
+В качестве значения кельвинов пользователь может ввести «кельвины», «кельвины» или «к».
+Обратите внимание, что преобразование единиц температуры отличается от работы с длиной или весом. Проблема в том, что 0 Кельвинов не равны 0 градусам Цельсия или 0 градусам Фаренгейта, а также 0 градусов Цельсия не равны 0 градусам Фаренгейта. Это означает, что наш процесс преобразования будет отличаться.
+
+Рассмотрим формулы перевода одной единицы температуры в другую.
+
+1) Цельсия в Фаренгейт или наоборот:
+
+С
+=
+(
+Ф
+−
+32
+)
+∗
+5
+9
+С=( Ф−32)∗ 
+9
+5
+​
+ 
+
+Ф
+=
+С
+∗
+9
+5
++
+3
+2
+Ф=С∗ 
+5
+9
+​
+ +32
+
+2) Кельвины в Цельсия или наоборот:
+
+К
+=
+С
++
+273.15
+К=С+273.15
+
+С
+=
+К
+−
+2
+7
+3
+.
+1
+5
+С=К−273.15
+
+3) Фаренгейты в Кельвины и наоборот:
+
+Ф
+=
+К
+∗
+9
+5
+−
+459.67
+Ф=К∗ 
+5
+9
+​
+ −459.67
+
+К
+=
+(
+Ф
++
+4
+5
+9
+.
+6
+7
+)
+∗
+5
+9
+К=( Ф+459.67)∗ 
+9
+5
+​
+ 
+
+Попробуйте переписать свою программу, используя перечисления. Проблема с представлением единиц измерения в виде строк заключается в том, что обработка строк может занять больше времени, тем более что каждая единица измерения имеет как минимум три различных принятых строковых обозначения (например, «м», «метр» и «метры»).
+Если вы представляете каждую единицу специальным значением перечисления, ваш код становится чище и читабельнее. Поскольку сравнение значений перечисления происходит намного быстрее, чем сравнение строк, ваш код также обрабатывается быстрее.
+
+Если пользователь хочет преобразовать вес или длину из одной единицы измерения в другую и вводит отрицательное значение, выведите Weight shouldn't be negativeили Length shouldn't be negativeсоответственно.
+
+Если запрос неверный, мы также должны обработать это. Попробуйте разобрать следующие части:
+
+<number> +
+<(unit name) or (degree + unit name) or (degrees + unit name)> +
+<random word like "to" or "in"> +
+<(unit name) or (degree + unit name) or (degrees + unit name)>
+Если есть ошибка, выведите Parse error.
+
+Цели
+Перепишите свою программу, используя перечисления.
+Ваша программа должна иметь возможность преобразовывать значения из любой единицы длины, веса или температуры в любую другую подходящую единицу.
+Пользовательский ввод остается нечувствительным к регистру.
+Ваша программа должна иметь возможность обрабатывать все возможные типы ошибок. В сообщении об ошибке оба типа измерения должны быть записаны во множественном числе, а не в единственном числе.
+После каждого преобразования единиц используйте линию разрыва.
+Программа должна продолжать обрабатывать вводимые пользователем данные до тех пор, пока они не введут exit.
+Примеры
+Пример 1:
+
+Enter what you want to convert (or exit): 1 degree Celsius to kelvins
+1.0 degree Celsius is 274.15 kelvins
+
+Enter what you want to convert (or exit): -272.15 dc to K
+-272.15 degrees Celsius is 1.0 kelvin
+
+Enter what you want to convert (or exit): 1 kn to feet
+Conversion from ??? to feet is impossible
+
+Enter what you want to convert (or exit): 1 km to feet
+1.0 kilometer is 3280.839895013123 feet
+
+Enter what you want to convert (or exit): 3 pount to ounces
+Conversion from ??? to ounces is impossible
+
+Enter what you want to convert (or exit): 3 pound to ounces
+3.0 pounds is 47.99999999999999 ounces
+
+Enter what you want to convert (or exit): 3 kelvins to grams
+Conversion from kelvins to grams is impossible
+
+Enter what you want to convert (or exit): exit
+Пример 2:
+
+Enter what you want to convert (or exit): 1 F in K
+1.0 degree Fahrenheit is 255.92777777777778 kelvins
+
+Enter what you want to convert (or exit): 1 K in F
+1.0 kelvin is -457.87 degrees Fahrenheit
+
+Enter what you want to convert (or exit): 1 C in K
+1.0 degree Celsius is 274.15 kelvins
+
+Enter what you want to convert (or exit): 1 K in C
+1.0 kelvin is -272.15 degrees Celsius
+
+Enter what you want to convert (or exit): 1 F in C
+1.0 degree Fahrenheit is -17.22222222222222 degrees Celsius
+
+Enter what you want to convert (or exit): 1 C in F
+1.0 degree Celsius is 33.8 degrees Fahrenheit
+
+Enter what you want to convert (or exit): one boa in parrots
+Parse error
+
+Enter what you want to convert (or exit): please convert distance to the Moon to steps
+Parse error
+
+Enter what you want to convert (or exit): many things to improve!
+Parse error
+
+Enter what you want to convert (or exit): exit
+
