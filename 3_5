@@ -21,7 +21,7 @@ fun checkInput(count: Double, unit: String): String {
                         break@outerLoop
                     }
 
-                    count > 1.0 -> {
+                    count > 1.0 || count in 0.0 ..0.9 -> {
                         inputUnit = u[2]
                         isRightStr = true
                         unitForConverting = k
@@ -40,8 +40,8 @@ fun checkInput(count: Double, unit: String): String {
         "Wrong input. Unknown unit $unit"
     } else {
         val outputCount = convertUnit(count, unitForConverting)
-        val outputUnit = if (outputCount > 1.0) UnitBase().unitBase[3]["meter"]?.get(2) else
-            UnitBase().unitBase[3]["meter"]?.get(1)
+        val outputUnit = if (outputCount == 1.0) UnitBase().unitBase[3]["meter"]?.get(1) else
+            UnitBase().unitBase[3]["meter"]?.get(2)
         "$count $inputUnit is $outputCount $outputUnit"
     }
 }
