@@ -6,9 +6,8 @@ fun main(args: Array<String>) {
 }
 
 fun checkInput(count: Int, unit: String): String {
-    val s = if (unit.last() == 's') "s" else ""
+    val s = if (unit.last() == 's' || count > 1) "s" else ""
     val convertion = convertUnit(count)
-    var outputUnit = if (count > 1) unit + "s" else unit
     val rightOutput = "$count kilometer$s is $convertion meters"
     val wrongInput = "Wrong input"
     return when {
