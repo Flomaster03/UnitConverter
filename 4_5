@@ -1,3 +1,5 @@
+package converter
+
 fun main() {
     while (true) {
         print("Enter what you want to convert (or exit): ")
@@ -7,64 +9,56 @@ fun main() {
         } else {
             val inputList = inputStr.split(" ")
             val inputCount = inputList[0].toDouble()
-            val inputUnit = inputList[1].lowercase()
-            val outputUnit = inputList[3].lowercase()
+            val inputUnit = inputList[1]
+            val outputUnit = inputList[3]
             val outputStr = checkInput(inputCount, inputUnit, outputUnit)
             println(outputStr)
         }
     }
 }
 
-//содержится ли входящая единица измерения в классе единиц измерения
-//аргументы: массив единиц измерений, название единицы измерения для конвертации, ее категория
-//выход: содержится ли входящая единица измерения в этом массиве, категория этого массива,
-// ключ и первое значение в массиве единиц измерения (чтобы определить потом ед/мн число)
-fun foundInBase(
-    base: Array<Map<String, List<String>>>,
-    unit: String,
-    category: String
-): Triple<Boolean, String, Array<String>> {
+//содержится ли входящая единица измерения в базе единиц измерения
+//аргумент: название единицы измерения для проверки
+//выход: содержится ли входящая единица измерения в базе; категория, в которой она содержится и
+// ед. и мн.числа этого значения (в массиве)
+fun foundInBase(unit: String): Triple<Boolean, String, Array<String>> {
     var isContain = false
-    var mapData = emptyArray<String>()
-    outerLoop@ for (i in base.indices) {
-        for ((k, u) in base[i]) {
-            if (u.contains(unit)) {
-                mapData += k
-                mapData += u[0]
+    var category = ""
+    val unitInSingularAndPlural = arrayOf("", "")  //названия единицы в единственном и множественном числах
+    outerLoop@ for (k in UnitBase.base.keys) {  //перебор в ключах базы (категориях)
+        val arr = UnitBase.base[k] ?: break
+        for (i in arr.indices) {
+            if (arr[i].contains(unit)) {
+                unitInSingularAndPlural[0] = arr[i][0] // единственное число
+                unitInSingularAndPlural[1] = arr[i][1] // множественное число
+                category = k
                 isContain = true
                 break@outerLoop
             }
         }
     }
-    return Triple(isContain, category, mapData)
+    return Triple(isContain, category, unitInSingularAndPlural)
 }
 
 //формирует выходную строку в зависимости от входных единиц.
 fun checkInput(count: Double, inputUnit: String, outputUnit: String): String {
-    val key = listOf("length", "weight")                            //в какой категории искать
-    val arrayOfUnit = arrayOf(UnitBase().length, UnitBase().weight) //массив из величин
-
     var inputUnitToString = "???"
-    val number: Double
-    var outputUnitToString = outputUnit
-    for (i in arrayOfUnit.indices) {
-        val inputCheckUnit = foundInBase(arrayOfUnit[i], inputUnit, key[i])
-        if (inputCheckUnit.first) {
-            inputUnitToString = if (count == 1.0) inputCheckUnit.third[0] else inputCheckUnit.third[1]
-            val outputCheckUnit = foundInBase(arrayOfUnit[i], outputUnit, key[i])
-            if (outputCheckUnit.first) {
-                number = when (i) {
-                    0 -> convertLength(count, inputCheckUnit.third[0], outputCheckUnit.third[0])
-                    1 -> convertWeight(count, inputCheckUnit.third[0], outputCheckUnit.third[0])
-                    else -> break
-                }
-                outputUnitToString = if (number == 1.0) outputCheckUnit.third[0] else outputCheckUnit.third[1]
-                return "$count $inputUnitToString is $number $outputUnitToString"
-            }
-            inputUnitToString = inputCheckUnit.third[1]
-            break
+    var outputUnitToString = "???"
+    val inputCheckUnit = foundInBase(inputUnit.lowercase()) //проверка для входящей единицы
+    val outputCheckUnit = foundInBase(outputUnit.lowercase())  //проверка для исходящей единицы
+    if (inputCheckUnit.first) inputUnitToString = if (count == 1.0) inputCheckUnit.third[0] else inputCheckUnit.third[1]
+    //формирование строки, если входящая и исходящая единицы существуют в базе и принадлежат одной системе измерений
+    if (inputCheckUnit.first && outputCheckUnit.first && inputCheckUnit.second == outputCheckUnit.second) {
+        val numberAfterConvert = when (inputCheckUnit.second) {
+            "length" -> convertLength(count, inputCheckUnit.third[0], outputCheckUnit.third[0])
+            "weight" -> convertWeight(count, inputCheckUnit.third[0], outputCheckUnit.third[0])
+            else -> -1.0
         }
+        outputUnitToString = if (numberAfterConvert == 1.0) outputCheckUnit.third[0] else outputCheckUnit.third[1]
+        return "$count $inputUnitToString is $numberAfterConvert $outputUnitToString"
     }
+    if (outputCheckUnit.first) outputUnitToString = outputCheckUnit.third[1]
+    if (inputCheckUnit.first) inputUnitToString = inputCheckUnit.third[1]
     return "Conversion from $inputUnitToString to $outputUnitToString is impossible"
 }
 
@@ -115,23 +109,24 @@ fun convertWeight(count: Double, inputUnit: String, outputUnit: String): Double 
 }
 
 //массив единиц
-class UnitBase() {
-    val length: Array<Map<String, List<String>>> = arrayOf(
-        mapOf("kilometer" to listOf("kilometers", "km", "kilometer")),
-        mapOf("millimeter" to listOf("millimeters", "mm", "millimeter")),
-        mapOf("centimeter" to listOf("centimeters", "cm", "centimeter")),
-        mapOf("meter" to listOf("meters", "m", "meter")),
-        mapOf("mile" to listOf("miles", "mi", "mile")),
-        mapOf("yard" to listOf("yards", "yd", "yard")),
-        mapOf("foot" to listOf("feet", "ft", "foot")),
-        mapOf("inch" to listOf("inches", "in", "inch"))
-    )
-    val weight: Array<Map<String, List<String>>> = arrayOf(
-        mapOf("gram" to listOf("grams", "g", "gram")),
-        mapOf("kilogram" to listOf("kilograms", "kg", "kilogram")),
-        mapOf("milligram" to listOf("milligrams", "mg", "milligram")),
-        mapOf("pound" to listOf("pounds", "lb", "pound")),
-        mapOf("ounce" to listOf("ounces", "oz", "ounce"))
+object UnitBase {
+    val base = mapOf(
+        "length" to arrayOf(
+            arrayOf("kilometer", "kilometers", "km"),
+            arrayOf("millimeter", "millimeters", "mm"),
+            arrayOf("centimeter", "centimeters", "cm"),
+            arrayOf("meter", "meters", "m"),
+            arrayOf("mile", "miles", "mi"),
+            arrayOf("yard", "yards", "yd"),
+            arrayOf("foot", "feet", "ft"),
+            arrayOf("inch", "inches", "in")
+        ),
+        "weight" to arrayOf(
+            arrayOf("gram", "grams", "g"),
+            arrayOf("kilogram", "kilograms", "kg"),
+            arrayOf("milligram", "milligrams", "mg"),
+            arrayOf("pound", "pounds", "lb"),
+            arrayOf("ounce", "ounces", "oz")
+        )
     )
 }
-
